@@ -1,6 +1,8 @@
 //
 // gcc exercise1.c -o exercise1 -fopenmp -D PARALLEL_J
 //
+// perf stat -d ./exercise1
+//
 //
 
 #ifndef N
@@ -15,28 +17,45 @@
 #include <omp.h>
 #include <stdio.h>
 
+#include <sys/time.h>
+#include <signal.h>
+#include <stdio.h>
+#include <string.h>
+
 // globally defined arrays
 int A[N][N];
 int B[N][N];
 int C[N][N];
 
-#ifdef DEBUG
-int D[N][N];  // debug sequential
-#endif
+void timer_handler (int signum) {
+    printf ("Timed out!\n");
+}
 
 int main(){
 	
-	omp_set_num_threads(10);
+	// add timeout
+	struct itimerval timer;
+	struct sigaction sa;
+	
+	memset (&sa, 0, sizeof (sa));
+	sa.sa_handler = &timer_handler;
+	sigaction (SIGVTALRM, &sa, 0);
+	
+	timer.it_value.tv_sec = 2;
+	timer.it_value.tv_usec = 500000;
+	timer.it_interval.tv_sec = 0;
+	timer.it_interval.tv_usec = 0;
+	setitimer (ITIMER_VIRTUAL, &timer, 0);
+	
+	
+	
+	// init num threads
+	omp_set_num_threads(4);
 	printf("Num threads: %d\n", omp_get_num_threads());
 	
+	// init vars
 	int checksum = 0;
 	int i, j, k;
-	
-	#ifdef DEBUG
-	// initialize debug values
-	int debugsum = 0;
-	for (i=0; i < N; i++) { for (j=0; j < N; j++) {D[i][j] = 0;}}
-	#endif
 	
 	// initialize values
 	for (i=0; i < N; i++) {
@@ -46,7 +65,6 @@ int main(){
 			C[i][j] = 0;
 		}
 	}
-	
 	
 	#ifdef PARALLEL_I
 	
@@ -65,7 +83,7 @@ int main(){
 	
 	#elif PARALLEL_K
 	
-		// causing bad values.
+		// causing bad values. added atomic.
 	
 		printf("parallel k\n");
 	
@@ -87,10 +105,11 @@ int main(){
 		
 		// perhaps terrible caching?
 		
-		// tons of calls to RAM
+		// looked at results, huge amounts of L1 cache misses
+		// probably a huge number of calls to RAM memory is extremely slow
 	
 		printf("parallel j\n");
-	
+		
 		for (i=0; i < N; i++) {
 			for (k=0; k < N; k++) {
 				
@@ -103,7 +122,7 @@ int main(){
 		}
 	
 	#else
-	
+		
 		// sequential matrix multiplication
 		for (i=0; i < N; i++) {
 			for (k=0; k < N; k++) {
@@ -115,26 +134,10 @@ int main(){
 	
 	#endif
 	
+	
 	// calculate diagnoal checksum
 	for (i=0; i < N; i++) { checksum += C[i][i]; }
 	printf("checksum: %d\n", checksum);
 	
-	
-	#ifdef DEBUG
-	// debug ~ sequential math
-	for (i=0; i < N; i++) {
-		for (k=0; k < N; k++) {
-			for (j=0; j < N; j++) {
-				D[i][j] += A[i][k] * B[k][j];
-			}
-		}
-	}
-	for (i=0; i < N; i++) { debugsum += D[i][i]; }
-	printf("debugsum: %d\n", debugsum);
-	#endif
-	
 } 
-
-
-
 
