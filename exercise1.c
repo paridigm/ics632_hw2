@@ -10,7 +10,7 @@
 	// #define DEBUG
 	// #define N 790  	  // default array size
 	
-	#define N 200	
+	#define N 200
 	
 #endif
 
@@ -19,7 +19,6 @@
 
 #include <sys/time.h>
 #include <signal.h>
-#include <stdio.h>
 #include <string.h>
 
 // globally defined arrays
@@ -46,7 +45,6 @@ int main(){
 	timer.it_interval.tv_sec = 0;
 	timer.it_interval.tv_usec = 0;
 	setitimer (ITIMER_VIRTUAL, &timer, 0);
-	
 	
 	
 	// init num threads
