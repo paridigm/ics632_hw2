@@ -56,7 +56,7 @@ done
 
 echo "matrix mult - ${mult_modes[0]} "
 
-gcc exercise1.c -o exercise1 -Ofast -fopenmp -D N=$mult_n -D NUM_THREADS=1
+icc exercise1.c -o exercise1 -Ofast -fopenmp -D N=$mult_n -D NUM_THREADS=1
 
 for ((j=0; j<epochs; j++))
 do 
@@ -83,7 +83,7 @@ do
 	for ((i=1; i<=threads; i++))
 	do
 		# compile for each thread
-		gcc exercise1.c -o exercise1 -Ofast -fopenmp -D N=$mult_n -D NUM_THREADS=$i -D ${mult_modes[m]}
+		icc exercise1.c -o exercise1 -Ofast -fopenmp -D N=$mult_n -D NUM_THREADS=$i -D ${mult_modes[m]}
 		
 		# add a line
 		echo -n "$i, " >> $results_dir/${mult_time_results_files[m]}
@@ -119,7 +119,7 @@ done
 
 echo "Heat Transfer - Sequential"
 
-gcc exercise2.c -o exercise2 -Ofast -fopenmp
+icc exercise2.c -o exercise2 -Ofast -fopenmp
 
 for ((j=0; j<epochs; j++))
 do 
@@ -140,8 +140,8 @@ done
 echo "Heat Transfer - Faster Versions"
 
 # compile for each thread
-gcc exercise2.c -o exercise2 -Ofast -fopenmp -D PARALLEL
-gcc exercise2_fast.c -o exercise2_fast -Ofast -fopenmp -D TILE_SIZE=$heat_tile_size
+icc exercise2.c -o exercise2 -Ofast -fopenmp -D PARALLEL
+icc exercise2_fast.c -o exercise2_fast -Ofast -fopenmp -D TILE_SIZE=$heat_tile_size
 
 for ((i=1; i<=threads; i++))
 do
