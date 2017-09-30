@@ -1,21 +1,21 @@
 //
-// gcc exercise1.c -o exercise1 -fopenmp -D PARALLEL_J
+// gcc exercise1.c -o exercise1 -fopenmp -D N=100 -D NUM_THREADS=4 -D PARALLEL_J
 //
 // perf stat -d ./exercise1
 //
 //
 
 #ifndef N
-	
-	// #define DEBUG
-	// #define N 790  	  // default array size
-	
-	#define N 200
-	
+	#define N 100				// tesing array size
+#endif
+
+#ifndef NUM_THREADS
+	#define NUM_THREADS 4 		// number of threads
 #endif
 
 #include <omp.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <sys/time.h>
 #include <signal.h>
@@ -28,6 +28,7 @@ int C[N][N];
 
 void timer_handler (int signum) {
     printf ("Timed out!\n");
+	exit(0);
 }
 
 int main(){
@@ -40,16 +41,15 @@ int main(){
 	sa.sa_handler = &timer_handler;
 	sigaction (SIGVTALRM, &sa, 0);
 	
-	timer.it_value.tv_sec = 2;
-	timer.it_value.tv_usec = 500000;
+	timer.it_value.tv_sec = 10;
+	timer.it_value.tv_usec = 0;
 	timer.it_interval.tv_sec = 0;
 	timer.it_interval.tv_usec = 0;
 	setitimer (ITIMER_VIRTUAL, &timer, 0);
 	
-	
 	// init num threads
-	omp_set_num_threads(4);
-	printf("Num threads: %d\n", omp_get_num_threads());
+	omp_set_num_threads( NUM_THREADS );
+	//printf("Num threads: %d\n", NUM_THREADS);
 	
 	// init vars
 	int checksum = 0;
@@ -66,9 +66,9 @@ int main(){
 	
 	#ifdef PARALLEL_I
 	
-		// works fine
+		// works fine without atomic
 	
-		printf("parallel i\n");
+		//printf("parallel i\n");
 	
 		#pragma omp parallel for private(i, k, j)
 		for (i=0; i < N; i++) {
@@ -83,7 +83,7 @@ int main(){
 	
 		// causing bad values. added atomic.
 	
-		printf("parallel k\n");
+		//printf("parallel k\n");
 	
 		for (i=0; i < N; i++) {
 			
@@ -99,14 +99,11 @@ int main(){
 	
 	#elif PARALLEL_J
 	
-		// causing longer time than sequential. no idea why.
+		// causing longer time than sequential.
+		// results: huge amounts of L1 cache misses
+		// probably a huge number of calls to RAM memory which is extremely slow
 		
-		// perhaps terrible caching?
-		
-		// looked at results, huge amounts of L1 cache misses
-		// probably a huge number of calls to RAM memory is extremely slow
-	
-		printf("parallel j\n");
+		//printf("parallel j\n");
 		
 		for (i=0; i < N; i++) {
 			for (k=0; k < N; k++) {
@@ -132,10 +129,11 @@ int main(){
 	
 	#endif
 	
-	
-	// calculate diagnoal checksum
-	for (i=0; i < N; i++) { checksum += C[i][i]; }
-	printf("checksum: %d\n", checksum);
+	#ifdef CHECKSUM
+		// calculate diagnoal checksum
+		for (i=0; i < N; i++) { checksum += C[i][i]; }
+		printf("checksum: %d\n", checksum);
+	#endif
 	
 } 
 

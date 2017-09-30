@@ -1,8 +1,7 @@
 //
+// gcc exercise2.c -o exercise2 -fopenmp -D PARALLEL
 //
-// gcc exercise2_startingpoint.c -o exercise2_startingpoint -fopenmp -D PARALLEL
-//
-// perf stat ./exercise2_startingpoint 1 1
+// perf stat ./exercise2 1 1
 //
 
 #include <stdio.h>
@@ -12,7 +11,7 @@
 #include <signal.h>
 #include <omp.h>
 
-#define N 5
+#define N 12000			// array size
 
 #define Y j
 #define X i-j
@@ -43,6 +42,10 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
+  // init num threads
+  omp_set_num_threads(num_threads);
+  //printf("Num threads: %d\n", num_threads);
+  
   // Fill in the array
   for (i=0; i < N+2; i++) {
     for (j=0; j < N+2; j++) {
@@ -56,7 +59,7 @@ int main(int argc, char **argv) {
 	#ifdef PARALLEL
 		
 		// for each diagnoal
-		for(i=2; i<=N+1; i++) {
+		for(i=1+1; i<=N+1; i++) {
 			
 			#pragma omp parallel shared(A, i) private(j) 
 			{
@@ -75,14 +78,13 @@ int main(int argc, char **argv) {
 				
 			}
 			
-			printf("\nSYNC\n\n");
+			//printf("\nSYNC\n\n");
 			
 		}
 		
 		
-		
 		// for each diagnoal
-		for(i=2; i<=N; i++) {
+		for(i=1+1; i<=N; i++) {
 			
 			#pragma omp parallel shared(A, i) private(j) 
 			{
@@ -101,15 +103,11 @@ int main(int argc, char **argv) {
 				
 			}
 			
-			printf("\nSYNC\n\n");
+			//printf("\nSYNC\n\n");
 			
 		}
 		
-		
-		// TODO: for some reason, when I parallelize, my sum changes
-		
-		// The above code will be O(2N) with theoretically infinite parallel threads
-	
+		// The above code will be O(2N-1) with theoretically infinite parallel threads
 	
 	#elif ROW_COL 
 	
@@ -131,8 +129,7 @@ int main(int argc, char **argv) {
 			
 		}
 	
-		// The above code can only utilize 2 threads at once, therefore only twice as fast as the original
-	
+		// above code only utilizes 2 threads, therefore only twice as fast as the original
 	
 	#else
 	
@@ -149,16 +146,16 @@ int main(int argc, char **argv) {
 	
   }
 
-  // Compute and print the sum of elements for correctness checking
-  int sum =0 ;
-  for (i=1; i < N; i++) {
-    for (j=1; j < N; j++) {
-      sum += A[i][j];
-    }
-  }
+  #ifdef CHECKSUM
+	  // Compute and print the sum of elements for correctness checking
+	  int sum =0 ;
+	  for (i=1; i < N; i++) {
+		for (j=1; j < N; j++) {
+		  sum += A[i][j];
+		}
+	  }
+	  fprintf(stderr,"sum = %d\n",sum);
+  #endif
   
-  // sum for correctness
-  fprintf(stderr,"sum = %d\n",sum);
-
   exit(0);
 }
