@@ -12,10 +12,10 @@
 
 # setup vars
 
-mult_n=1150			# array size for matrix mult (5 sec)
+mult_n=2400			# array size for matrix mult (5 sec)
 threads=20			# max number of threads to test (should be 20)
 epochs=10			# tests per thread amount
-heat_iters=12		# iterations to run the heat transfer problem (10 sec)
+heat_iters=15		# iterations to run the heat transfer problem (10 sec)
 heat_tile_size=400	# tile size for heat transfer problem
 
 mult_modes=(PARALLEL_NONE PARALLEL_I PARALLEL_K PARALLEL_J)
