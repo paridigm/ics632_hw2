@@ -51,11 +51,32 @@ do
 done
 
 
-###### matrix mult - all tests ########
 
-echo "Matrix Multiplication - All Tests"
+###### matrix mult - sequential test ########
 
-for((m=0; m<4; m++))
+echo "matrix mult - ${mult_modes[0]} "
+
+gcc exercise1.c -o exercise1 -Ofast -fopenmp -D N=$mult_n -D NUM_THREADS=1
+
+for ((j=0; j<epochs; j++))
+do 
+	# append stats to output file(s)
+	perf stat -d -o perf.txt ./exercise1;
+	str_t=$(cat perf.txt | grep "seconds time elapsed" | sed  "s/ *//" | sed "s/ .*seconds.*//" | sed "s/,//g")
+	str_l1=$(cat perf.txt | grep "L1-dcache-load-misses" | sed "s/ *//" | sed "s/ .*L1.*//" | sed "s/,//g")
+	str_llc=$(cat perf.txt | grep "LLC-load-misses" | sed "s/ *//" | sed "s/ .*LLC.*//" | sed "s/,//g")
+	echo -n "$str_t, " >> $results_dir/${mult_time_results_files[0]}
+	echo -n "$str_l1, " >> $results_dir/${mult_l1_misses_results_files[0]}
+	echo -n "$str_llc, " >> $results_dir/${mult_llc_misses_results_files[0]}
+	echo " $j"
+done
+
+
+###### matrix mult - parallel tests ########
+
+echo "Matrix Multiplication - Parallel Tests"
+
+for((m=1; m<4; m++))
 do
 	echo "matrix mult - ${mult_modes[m]} "
 
